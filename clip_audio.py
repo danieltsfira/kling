@@ -67,9 +67,17 @@ def safe_name(text: str) -> str:
     return re.sub(r"\s+", "_", text)[:80] or "clip"
 
 
+def yt_dlp_base() -> list[str]:
+    """yt-dlp needs a JS runtime for YouTube; it only looks for deno by default."""
+    cmd = ["yt-dlp", "--no-playlist"]
+    if not shutil.which("deno") and shutil.which("node"):
+        cmd += ["--js-runtimes", "node"]
+    return cmd
+
+
 def video_title(url: str) -> str:
     out = subprocess.run(
-        ["yt-dlp", "--no-playlist", "--skip-download", "--print", "%(title)s", url],
+        [*yt_dlp_base(), "--skip-download", "--print", "%(title)s", url],
         capture_output=True, text=True,
     )
     return out.stdout.strip().splitlines()[0] if out.returncode == 0 and out.stdout.strip() else "clip"
@@ -91,7 +99,7 @@ def make_clip(url: str, start: float, duration: float, name: str | None,
     out_path = unique_path(os.path.join(out_dir, f"{name}_{fmt_time(start)}.{fmt}"))
 
     with tempfile.TemporaryDirectory() as tmp:
-        cmd = ["yt-dlp", "--no-playlist", "-f", "bestaudio/best", "-o", os.path.join(tmp, "src.%(ext)s")]
+        cmd = [*yt_dlp_base(), "-f", "bestaudio/best", "-o", os.path.join(tmp, "src.%(ext)s")]
         if full_download:
             seek = start
         else:
