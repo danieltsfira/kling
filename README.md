@@ -47,3 +47,38 @@ print(result["task_result"]["videos"][0]["url"])
 
 Note: Kling serves its global API at `https://api-singapore.klingai.com`. If your account
 uses a different endpoint, set `KLING_API_BASE_URL` in `.env`.
+
+## Audio clips from YouTube (`clip_audio.py`)
+
+Cuts a short audio clip (10 seconds by default) out of a YouTube video. Only the needed
+section is downloaded, and the clip is saved to `audio_clips/`.
+
+Requires `ffmpeg` (`brew install ffmpeg` / `winget install ffmpeg` / `apt install ffmpeg`)
+and `yt-dlp` (`pip install -r requirements.txt`).
+
+```bash
+# Start time taken from the link's ?t= (YouTube "Share > Start at")
+python clip_audio.py "https://youtu.be/VIDEO_ID?t=83"
+
+# Explicit start time (83, 1:23 or 1m23s all work)
+python clip_audio.py "https://www.youtube.com/watch?v=VIDEO_ID" 1:23
+
+# Different length / explicit end / custom name / other format
+python clip_audio.py URL 1:23 -d 7
+python clip_audio.py URL 1:23 --end 1:31.5
+python clip_audio.py URL 1:23 -n "laugh" -f wav     # mp3 (default), wav, m4a, ogg, flac
+
+# Many clips at once
+python clip_audio.py --batch clips.txt
+```
+
+`clips.txt` holds one clip per line: `URL START [DURATION] [NAME]` (use `-` to keep a default,
+`#` for comments):
+
+```
+https://www.youtube.com/watch?v=VIDEO_ID 1:23
+https://youtu.be/VIDEO_ID?t=95 - 8 funny laugh
+```
+
+If a section download fails, add `--full-download` to grab the whole audio track and cut it locally.
+If YouTube starts refusing downloads, update yt-dlp: `pip install -U yt-dlp`.
